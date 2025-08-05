@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloco de Notas Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .linked-word {
+            background: linear-gradient(120deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 1px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .linked-word:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+        .tab-content {
+            min-height: 500px;
+        }
+        .note-editor {
+            min-height: 400px;
+            resize: vertical;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar w-80 border-r border-gray-200 p-4 overflow-y-auto">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📝 Minhas Notas</h2>
+            
+            <!-- Botão Nova Aba -->
+            <button onclick="createNewTab()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mb-4 transition-colors">
+                ➕ Nova Aba
+            </button>
+            
+            <!-- Lista de Abas -->
+            <div id="tabsList" class="space-y-2 mb-6">
+                <!-- Abas serão inseridas aqui -->
+            </div>
+            
+            <!-- Seção de Links -->
+            <div class="border-t pt-4">
+                <h3 class="font-semibold text-gray-700 mb-3">🔗 Links Encontrados</h3>
+                <div id="linksList" class="space-y-2">
+                    <!-- Links serão inseridos aqui -->
+                </div>
+            </div>
+            
+            <!-- Seção de Busca -->
+            <div class="border-t pt-4 mt-4">
+                <h3 class="font-semibold text-gray-700 mb-3">🔍 Buscar</h3>
+                <input type="text" id="searchInput" placeholder="Buscar em todas as abas..." 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       oninput="searchNotes()">
+                <div id="searchResults" class="mt-2 space-y-1">
+                    <!-- Resultados da busca -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Área Principal -->
+        <div class="flex-1 flex flex-col">
+            <!-- Header -->
+            <div class="bg-white border-b border-gray-200 p-4">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-gray-800">Bloco de Notas Inteligente</h1>
+                    <div class="flex space-x-2">
+                        <button onclick="exportNotes()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            📤 Exportar
+                        </button>
+                        <button onclick="createLink()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            🔗 Criar Link
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Conteúdo da Aba -->
+            <div class="flex-1 p-6">
+                <div id="tabContent" class="tab-content">
+                    <div class="text-center text-gray-500 mt-20">
+                        <div class="text-6xl mb-4">📝</div>
+                        <h3 class="text-xl font-semibold mb-2">Bem-vindo ao seu Bloco de Notas!</h3>
+                        <p>Crie uma nova aba para começar a escrever suas notas.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Criar Links -->
+    <div id="linkModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-96 max-w-90vw">
+            <h3 class="text-lg font-semibold mb-4">🔗 Criar Link entre Palavras</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Palavra de origem:</label>
+                    <input type="text" id="sourceWord" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Aba de destino:</label>
+                    <select id="targetTab" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" onchange="updatePageOptions()">
+                        <!-- Opções serão inseridas aqui -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Página de destino:</label>
+                    <select id="targetPage" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <!-- Opções serão inseridas aqui -->
+                    </select>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="confirmCreateLink()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        Criar Link
+                    </button>
+                    <button onclick="closeLinkModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup de Visualização de Link -->
+    <div id="linkPopup" class="fixed hidden z-50 bg-white rounded-lg shadow-2xl border border-gray-300 max-w-2xl w-96" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <div class="flex items-center space-x-2">
+                <span class="text-blue-600">🔗</span>
+                <h3 id="popupTitle" class="font-semibold text-gray-800"></h3>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="navigateToTab()" id="goToTabBtn" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-full transition-colors">
+                    Ir para aba
+                </button>
+                <button onclick="closeLinkPopup()" class="text-gray-500 hover:text-gray-700 text-xl leading-none">
+                    ✕
+                </button>
+            </div>
+        </div>
+        <div class="p-4 max-h-96 overflow-y-auto">
+            <div id="popupContent" class="prose max-w-none text-sm">
+                <!-- Conteúdo será inserido aqui -->
+            </div>
+        </div>
+        <div class="p-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-600 rounded-b-lg">
+            💡 Dica: Clique em "Ir para aba" para navegar diretamente para o local da palavra
+        </div>
+    </div>
+
+    <script>
+        // Estado da aplicação
+        let tabs = [];
+        let currentTabId = null;
+        let currentPageId = null;
+        let links = {}; // { palavra: { tabId, pageId } }
+        let tabCounter = 0;
+
+        // Inicializar aplicação
+        function init() {
+            // Criar primeira aba de exemplo
+            createNewTab('Bem-vindo', 'Bem-vindo ao seu bloco de notas inteligente!\n\n📋 Funcionalidades:\n• Crie múltiplas abas para organizar suas notas\n• Cada aba pode ter várias páginas\n• Vincule palavras entre diferentes abas e páginas\n• Use a busca para encontrar conteúdo rapidamente\n• Exporte suas notas quando precisar\n\nDica: Selecione uma palavra e clique em "Criar Link" para conectá-la a outra aba/página!');
+        }
+
+        // Criar nova aba
+        function createNewTab(title = null, content = '') {
+            tabCounter++;
+            const tabId = 'tab_' + tabCounter;
+            const tabTitle = title || `Nova Aba ${tabCounter}`;
+            
+            const newTab = {
+                id: tabId,
+                title: tabTitle,
+                pages: [{
+                    id: 'page_1',
+                    title: 'Página 1',
+                    content: content
+                }],
+                currentPageId: 'page_1'
+            };
+            
+            tabs.push(newTab);
+            renderTabs();
+            switchToTab(tabId);
+        }
+
+        // Criar nova página
+        function createNewPage() {
+            const tab = tabs.find(t => t.id === currentTabId);
+            if (!tab) return;
+            
+            const pageNumber = tab.pages.length + 1;
+            const newPage = {
+                id: `page_${pageNumber}`,
+                title: `Página ${pageNumber}`,
+                content: ''
+            };
+            
+            tab.pages.push(newPage);
+            tab.currentPageId = newPage.id;
+            switchToTab(currentTabId);
+        }
+
+        // Mudar para uma página específica
+        function switchToPage(pageId) {
+            const tab = tabs.find(t => t.id === currentTabId);
+            if (!tab) return;
+            
+            tab.currentPageId = pageId;
+            switchToTab(currentTabId);
+        }
+
+        // Renderizar lista de abas
+        function renderTabs() {
+            const tabsList = document.getElementById('tabsList');
+            tabsList.innerHTML = '';
+            
+            tabs.forEach(tab => {
+                const currentPage = tab.pages.find(p => p.id === tab.currentPageId) || tab.pages[0];
+                const tabElement = document.createElement('div');
+                tabElement.className = `p-3 rounded-lg cursor-pointer transition-colors ${
+                    currentTabId === tab.id ? 'bg-blue-100 border-l-4 border-blue-500' : 'bg-white hover:bg-gray-50'
+                }`;
+                
+                tabElement.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div onclick="switchToTab('${tab.id}')" class="flex-1">
+                            <div class="font-medium text-gray-800">${tab.title}</div>
+                            <div class="text-xs text-blue-600 mb-1">${tab.pages.length} página${tab.pages.length > 1 ? 's' : ''}</div>
+                            <div class="text-sm text-gray-500 truncate">${currentPage.content.substring(0, 50)}${currentPage.content.length > 50 ? '...' : ''}</div>
+                        </div>
+                        <button onclick="deleteTab('${tab.id}')" class="text-red-500 hover:text-red-700 ml-2">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+                
+                tabsList.appendChild(tabElement);
+            });
+        }
+
+        // Mudar para uma aba
+        function switchToTab(tabId, pageId = null) {
+            currentTabId = tabId;
+            const tab = tabs.find(t => t.id === tabId);
+            
+            if (!tab) return;
+            
+            // Se uma página específica foi solicitada, usar ela, senão usar a página atual da aba
+            if (pageId) {
+                tab.currentPageId = pageId;
+            }
+            currentPageId = tab.currentPageId;
+            
+            const currentPage = tab.pages.find(p => p.id === tab.currentPageId) || tab.pages[0];
+            
+            const tabContent = document.getElementById('tabContent');
+            tabContent.innerHTML = `
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="mb-4">
+                        <input type="text" value="${tab.title}" 
+                               onchange="updateTabTitle('${tabId}', this.value)"
+                               class="text-2xl font-bold text-gray-800 bg-transparent border-none outline-none w-full focus:bg-gray-50 rounded px-2 py-1">
+                    </div>
+                    
+                    <!-- Navegação de Páginas -->
+                    <div class="mb-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm font-medium text-gray-700">📄 Páginas:</span>
+                            <div class="flex space-x-1 flex-wrap" id="pagesList">
+                                ${tab.pages.map(page => `
+                                    <button onclick="switchToPage('${page.id}')" 
+                                            class="px-3 py-1 text-xs rounded transition-colors ${
+                                                page.id === tab.currentPageId 
+                                                    ? 'bg-blue-600 text-white' 
+                                                    : 'bg-white text-gray-600 hover:bg-blue-100'
+                                            }">
+                                        ${page.title}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <button onclick="createNewPage()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-xs rounded transition-colors">
+                            ➕ Nova Página
+                        </button>
+                    </div>
+                    
+                    <!-- Título da Página -->
+                    <div class="mb-3">
+                        <input type="text" value="${currentPage.title}" 
+                               onchange="updatePageTitle('${currentPage.id}', this.value)"
+                               class="text-lg font-semibold text-gray-700 bg-transparent border-none outline-none w-full focus:bg-gray-50 rounded px-2 py-1">
+                    </div>
+                    
+                    <textarea id="noteContent" 
+                              class="note-editor w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                              placeholder="Comece a escrever suas notas aqui..."
+                              oninput="updatePageContent('${currentPage.id}', this.value)"
+                              onmouseup="checkSelection()"
+                              onkeyup="checkSelection()">${currentPage.content}</textarea>
+                </div>
+            `;
+            
+            renderTabs();
+            updateLinksList();
+        }
+
+        // Variáveis globais para o popup
+        let currentPopupTabId = null;
+        let currentPopupPageId = null;
+        let currentPopupWord = null;
+
+        // Mostrar popup com preview da aba/página linkada
+        function showLinkPopup(tabId, pageId, word) {
+            const targetTab = tabs.find(t => t.id === tabId);
+            if (!targetTab) return;
+            
+            const targetPage = targetTab.pages.find(p => p.id === pageId);
+            if (!targetPage) return;
+            
+            currentPopupTabId = tabId;
+            currentPopupPageId = pageId;
+            currentPopupWord = word;
+            
+            const popup = document.getElementById('linkPopup');
+            const popupTitle = document.getElementById('popupTitle');
+            const popupContent = document.getElementById('popupContent');
+            
+            // Configurar título
+            popupTitle.textContent = `${targetTab.title} → ${targetPage.title} → "${word}"`;
+            
+            // Encontrar contexto da palavra na página de destino
+            const content = targetPage.content;
+            const wordLower = word.toLowerCase();
+            const contentLower = content.toLowerCase();
+            const wordIndex = contentLower.indexOf(wordLower);
+            
+            let contextContent = '';
+            if (wordIndex !== -1) {
+                // Extrair contexto ao redor da palavra (200 caracteres antes e depois)
+                const start = Math.max(0, wordIndex - 200);
+                const end = Math.min(content.length, wordIndex + word.length + 200);
+                const context = content.substring(start, end);
+                
+                // Destacar a palavra no contexto
+                const highlightedContext = context.replace(
+                    new RegExp(`\\b${word}\\b`, 'gi'),
+                    `<mark class="bg-yellow-200 px-1 rounded">${word}</mark>`
+                );
+                
+                contextContent = `
+                    <div class="mb-3">
+                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Contexto encontrado:</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border-l-4 border-blue-400">
+                        ${start > 0 ? '...' : ''}${highlightedContext}${end < content.length ? '...' : ''}
+                    </div>
+                `;
+            } else {
+                // Se a palavra não for encontrada, mostrar o início do conteúdo
+                const preview = content.substring(0, 300);
+                contextContent = `
+                    <div class="mb-3">
+                        <span class="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">Palavra não encontrada - Prévia da página:</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border-l-4 border-orange-400">
+                        ${preview}${content.length > 300 ? '...' : ''}
+                    </div>
+                `;
+            }
+            
+            popupContent.innerHTML = contextContent;
+            
+            // Mostrar popup
+            popup.classList.remove('hidden');
+        }
+
+        // Fechar popup
+        function closeLinkPopup() {
+            const popup = document.getElementById('linkPopup');
+            popup.classList.add('hidden');
+            currentPopupTabId = null;
+            currentPopupPageId = null;
+            currentPopupWord = null;
+        }
+
+        // Navegar para a aba/página do popup
+        function navigateToTab() {
+            if (currentPopupTabId && currentPopupPageId && currentPopupWord) {
+                closeLinkPopup();
+                navigateToWordInPage(currentPopupTabId, currentPopupPageId, currentPopupWord);
+            }
+        }
+
+        // Navegar para uma palavra específica em uma aba/página
+        function navigateToWordInPage(tabId, pageId, word) {
+            // Primeiro, mudar para a aba e página
+            switchToTab(tabId, pageId);
+            
+            // Aguardar um momento para o DOM ser atualizado
+            setTimeout(() => {
+                const textarea = document.getElementById('noteContent');
+                if (textarea) {
+                    const content = textarea.value.toLowerCase();
+                    const wordLower = word.toLowerCase();
+                    const wordIndex = content.indexOf(wordLower);
+                    
+                    if (wordIndex !== -1) {
+                        // Focar no textarea
+                        textarea.focus();
+                        
+                        // Selecionar a palavra encontrada
+                        textarea.setSelectionRange(wordIndex, wordIndex + word.length);
+                        
+                        // Rolar para a posição da palavra
+                        const lines = content.substring(0, wordIndex).split('\n');
+                        const lineNumber = lines.length;
+                        const lineHeight = 24; // altura aproximada da linha
+                        const scrollPosition = (lineNumber - 1) * lineHeight;
+                        
+                        textarea.scrollTop = Math.max(0, scrollPosition - textarea.clientHeight / 2);
+                    }
+                }
+            }, 100);
+        }
+
+        // Atualizar título da aba
+        function updateTabTitle(tabId, newTitle) {
+            const tab = tabs.find(t => t.id === tabId);
+            if (tab) {
+                tab.title = newTitle;
+                renderTabs();
+            }
+        }
+
+        // Atualizar título da página
+        function updatePageTitle(pageId, newTitle) {
+            const tab = tabs.find(t => t.id === currentTabId);
+            if (tab) {
+                const page = tab.pages.find(p => p.id === pageId);
+                if (page) {
+                    page.title = newTitle;
+                    switchToTab(currentTabId); // Re-renderizar
+                }
+            }
+        }
+
+        // Atualizar conteúdo da página
+        function updatePageContent(pageId, newContent) {
+            const tab = tabs.find(t => t.id === currentTabId);
+            if (tab) {
+                const page = tab.pages.find(p => p.id === pageId);
+                if (page) {
+                    page.content = newContent;
+                    renderTabs();
+                }
+            }
+        }
+
+        // Deletar aba
+        function deleteTab(tabId) {
+            if (tabs.length <= 1) {
+                alert('Você precisa ter pelo menos uma aba!');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja deletar esta aba?')) {
+                tabs = tabs.filter(t => t.id !== tabId);
+                
+                // Se a aba atual foi deletada, mudar para a primeira aba
+                if (currentTabId === tabId) {
+                    currentTabId = tabs[0].id;
+                    switchToTab(currentTabId);
+                } else {
+                    renderTabs();
+                }
+                
+                updateLinksList();
+            }
+        }
+
+        // Verificar seleção de texto
+        function checkSelection() {
+            const selection = window.getSelection();
+            const selectedText = selection.toString().trim();
+            
+            if (selectedText && selectedText.length > 0) {
+                document.getElementById('sourceWord').value = selectedText;
+            }
+        }
+
+        // Atualizar opções de páginas no modal
+        function updatePageOptions() {
+            const targetTabId = document.getElementById('targetTab').value;
+            const targetPageSelect = document.getElementById('targetPage');
+            
+            targetPageSelect.innerHTML = '';
+            
+            if (targetTabId) {
+                const targetTab = tabs.find(t => t.id === targetTabId);
+                if (targetTab) {
+                    targetTab.pages.forEach(page => {
+                        const option = document.createElement('option');
+                        option.value = page.id;
+                        option.textContent = page.title;
+                        targetPageSelect.appendChild(option);
+                    });
+                }
+            }
+        }
+
+        // Abrir modal de criação de link
+        function createLink() {
+            const modal = document.getElementById('linkModal');
+            const targetTab = document.getElementById('targetTab');
+            
+            // Preencher opções de abas (exceto a atual)
+            targetTab.innerHTML = '';
+            tabs.forEach(tab => {
+                if (tab.id !== currentTabId) {
+                    const option = document.createElement('option');
+                    option.value = tab.id;
+                    option.textContent = tab.title;
+                    targetTab.appendChild(option);
+                }
+            });
+            
+            // Atualizar opções de páginas
+            updatePageOptions();
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // Fechar modal de link
+        function closeLinkModal() {
+            const modal = document.getElementById('linkModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Confirmar criação de link
+        function confirmCreateLink() {
+            const sourceWord = document.getElementById('sourceWord').value.trim();
+            const targetTabId = document.getElementById('targetTab').value;
+            const targetPageId = document.getElementById('targetPage').value;
+            
+            if (!sourceWord) {
+                alert('Por favor, digite uma palavra para criar o link!');
+                return;
+            }
+            
+            if (!targetTabId || !targetPageId) {
+                alert('Por favor, selecione uma aba e página de destino!');
+                return;
+            }
+            
+            links[sourceWord] = { tabId: targetTabId, pageId: targetPageId };
+            closeLinkModal();
+            
+            updateLinksList();
+            alert(`Link criado! A palavra "${sourceWord}" agora leva para a aba/página selecionada.`);
+        }
+
+        // Atualizar lista de links
+        function updateLinksList() {
+            const linksList = document.getElementById('linksList');
+            linksList.innerHTML = '';
+            
+            Object.keys(links).forEach(word => {
+                const linkData = links[word];
+                const targetTab = tabs.find(t => t.id === linkData.tabId);
+                if (targetTab) {
+                    const targetPage = targetTab.pages.find(p => p.id === linkData.pageId);
+                    if (targetPage) {
+                        const linkElement = document.createElement('div');
+                        linkElement.className = 'flex items-center justify-between p-2 bg-white rounded border hover:bg-blue-50 cursor-pointer transition-colors';
+                        linkElement.innerHTML = `
+                            <div class="flex-1" onclick="showLinkPopup('${linkData.tabId}', '${linkData.pageId}', '${word}')">
+                                <span class="linked-word text-xs">${word}</span>
+                                <div class="text-xs text-gray-500">→ ${targetTab.title} → ${targetPage.title}</div>
+                            </div>
+                            <button onclick="removeLink('${word}')" class="text-red-500 hover:text-red-700 text-sm">
+                                ✕
+                            </button>
+                        `;
+                        linksList.appendChild(linkElement);
+                    }
+                }
+            });
+            
+            if (Object.keys(links).length === 0) {
+                linksList.innerHTML = '<div class="text-sm text-gray-500 italic">Nenhum link criado ainda</div>';
+            }
+        }
+
+        // Remover link
+        function removeLink(word) {
+            delete links[word];
+            updateLinksList();
+        }
+
+        // Buscar nas notas
+        function searchNotes() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (!query) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+            
+            const results = [];
+            tabs.forEach(tab => {
+                tab.pages.forEach(page => {
+                    if (tab.title.toLowerCase().includes(query) || 
+                        page.title.toLowerCase().includes(query) || 
+                        page.content.toLowerCase().includes(query)) {
+                        results.push({ tab, page });
+                    }
+                });
+            });
+            
+            resultsDiv.innerHTML = '';
+            results.forEach(result => {
+                const resultElement = document.createElement('div');
+                resultElement.className = 'p-2 bg-white rounded border cursor-pointer hover:bg-blue-50';
+                resultElement.onclick = () => switchToTab(result.tab.id, result.page.id);
+                
+                const contentPreview = result.page.content.toLowerCase().includes(query) 
+                    ? result.page.content.substring(result.page.content.toLowerCase().indexOf(query) - 20, result.page.content.toLowerCase().indexOf(query) + 50)
+                    : result.page.content.substring(0, 50);
+                
+                resultElement.innerHTML = `
+                    <div class="font-medium text-sm">${result.tab.title} → ${result.page.title}</div>
+                    <div class="text-xs text-gray-500 truncate">${contentPreview}...</div>
+                `;
+                resultsDiv.appendChild(resultElement);
+            });
+            
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div class="text-sm text-gray-500 italic">Nenhum resultado encontrado</div>';
+            }
+        }
+
+        // Exportar notas
+        function exportNotes() {
+            const exportData = {
+                tabs: tabs,
+                links: links,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            // Criar link temporário para download
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'minhas-notas.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Inicializar aplicação quando a página carregar
+        window.onload = init;
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96a86867a1b5b4af',t:'MTc1NDQxOTA2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
