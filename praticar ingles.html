@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI English Practice - Inglês Avançado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .recording-pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            height: 40px;
+        }
+        
+        .wave-bar {
+            width: 3px;
+            background: linear-gradient(to top, #3b82f6, #60a5fa);
+            border-radius: 2px;
+            animation: wave 1.5s ease-in-out infinite;
+        }
+        
+        .wave-bar:nth-child(1) { animation-delay: 0s; height: 10px; }
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; height: 20px; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; height: 30px; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; height: 25px; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; height: 15px; }
+        .wave-bar:nth-child(6) { animation-delay: 0.5s; height: 35px; }
+        .wave-bar:nth-child(7) { animation-delay: 0.6s; height: 20px; }
+        .wave-bar:nth-child(8) { animation-delay: 0.7s; height: 25px; }
+        
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1); }
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-white mb-4">🤖 AI English Practice</h1>
+            <p class="text-xl text-blue-100 max-w-2xl mx-auto">
+                Pratique inglês avançado com IA. Grave sua voz, receba análise detalhada e melhore sua fluência!
+            </p>
+        </div>
+
+        <!-- Main Practice Area -->
+        <div class="max-w-4xl mx-auto">
+            <!-- Topic Selection -->
+            <div class="bg-white rounded-2xl shadow-2xl p-8 mb-8 card-hover">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    📚 Escolha um Tópico Avançado
+                </h2>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <button onclick="selectTopic('business')" class="topic-btn bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105">
+                        💼 Business English
+                    </button>
+                    <button onclick="selectTopic('debate')" class="topic-btn bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105">
+                        🗣️ Debate & Arguments
+                    </button>
+                    <button onclick="selectTopic('academic')" class="topic-btn bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105">
+                        🎓 Academic Discussion
+                    </button>
+                </div>
+            </div>
+
+            <!-- Practice Question -->
+            <div id="questionCard" class="bg-white rounded-2xl shadow-2xl p-8 mb-8 card-hover hidden">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">📝 Sua Pergunta:</h3>
+                <div id="questionText" class="text-lg text-gray-700 mb-4 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
+                </div>
+                
+                <!-- Question Audio Controls -->
+                <div class="text-center mb-6">
+                    <button id="speakBtn" onclick="speakQuestion()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center mx-auto gap-2 mb-4">
+                        🔊 Ouvir Pergunta
+                    </button>
+                </div>
+                
+                <!-- Recording Controls -->
+                <div class="text-center mb-6">
+                    <button id="recordBtn" onclick="toggleRecording()" class="bg-red-500 hover:bg-red-600 text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 transform hover:scale-105 flex items-center mx-auto gap-3">
+                        🎤 Começar Gravação
+                    </button>
+                    
+                    <div id="recordingStatus" class="mt-4 hidden">
+                        <div class="flex items-center justify-center gap-4 text-red-600">
+                            <div class="recording-pulse">🔴</div>
+                            <span class="font-semibold">Gravando...</span>
+                            <div class="waveform">
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                            </div>
+                        </div>
+                        <div id="recordingTimer" class="text-gray-600 mt-2">00:00</div>
+                    </div>
+                </div>
+
+                <!-- Audio Playback -->
+                <div id="audioPlayback" class="hidden mb-6">
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <h4 class="font-semibold text-gray-800 mb-3">🎧 Sua Gravação:</h4>
+                        <audio id="recordedAudio" controls class="w-full mb-4"></audio>
+                        <button onclick="analyzeAudio()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
+                            🔍 Analisar Áudio
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Analysis Results -->
+            <div id="analysisCard" class="bg-white rounded-2xl shadow-2xl p-8 mb-8 card-hover hidden">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    🤖 Análise da IA
+                </h3>
+                
+                <!-- Overall Score -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-lg font-semibold text-gray-700">Pontuação Geral</span>
+                        <span id="overallScore" class="text-2xl font-bold text-blue-600">85/100</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="scoreBar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-1000" style="width: 85%"></div>
+                    </div>
+                </div>
+
+                <!-- Detailed Analysis -->
+                <div class="grid md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-green-50 rounded-xl p-6 border-l-4 border-green-500">
+                        <h4 class="font-bold text-green-800 mb-3 flex items-center">
+                            ✅ Pontos Fortes
+                        </h4>
+                        <ul id="strengths" class="text-green-700 space-y-2">
+                            <li>• Pronúncia clara e natural</li>
+                            <li>• Vocabulário avançado apropriado</li>
+                            <li>• Estrutura gramatical correta</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-orange-50 rounded-xl p-6 border-l-4 border-orange-500">
+                        <h4 class="font-bold text-orange-800 mb-3 flex items-center">
+                            🎯 Áreas para Melhorar
+                        </h4>
+                        <ul id="improvements" class="text-orange-700 space-y-2">
+                            <li>• Trabalhar na entonação em perguntas</li>
+                            <li>• Usar mais conectivos avançados</li>
+                            <li>• Melhorar o ritmo da fala</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Vocabulary Suggestions -->
+                <div class="bg-purple-50 rounded-xl p-6 border-l-4 border-purple-500 mb-6">
+                    <h4 class="font-bold text-purple-800 mb-3 flex items-center">
+                        📖 Palavras Avançadas Sugeridas
+                    </h4>
+                    <div id="vocabularySuggestions" class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-white rounded-lg p-3 border border-purple-200">
+                            <span class="text-red-600 line-through">good</span> → 
+                            <span class="text-green-600 font-semibold">advantageous, beneficial</span>
+                        </div>
+                        <div class="bg-white rounded-lg p-3 border border-purple-200">
+                            <span class="text-red-600 line-through">important</span> → 
+                            <span class="text-green-600 font-semibold">pivotal, crucial</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Response -->
+                <div class="bg-blue-50 rounded-xl p-6 border-l-4 border-blue-500">
+                    <h4 class="font-bold text-blue-800 mb-3 flex items-center">
+                        💬 Análise Detalhada da IA
+                    </h4>
+                    <p id="aiResponse" class="text-blue-700 leading-relaxed">
+                        Comunicação funcional, porém com várias áreas críticas para melhoria. Erros gramaticais frequentes prejudicam a credibilidade profissional. Pratique estruturas mais complexas.
+                    </p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-4 mt-8 justify-center">
+                    <button onclick="practiceAgain()" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
+                        🔄 Praticar Novamente
+                    </button>
+                    <button onclick="newTopic()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
+                        📚 Novo Tópico
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Tracking -->
+            <div class="bg-white rounded-2xl shadow-2xl p-8 card-hover">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    📊 Seu Progresso
+                </h3>
+                
+                <div class="grid md:grid-cols-3 gap-6 mb-6">
+                    <div class="text-center">
+                        <div id="sessionsCount" class="text-3xl font-bold text-blue-600 mb-2">0</div>
+                        <div class="text-gray-600">Sessões Completadas</div>
+                    </div>
+                    <div class="text-center">
+                        <div id="averageScore" class="text-3xl font-bold text-green-600 mb-2">0%</div>
+                        <div class="text-gray-600">Média de Pontuação</div>
+                    </div>
+                    <div class="text-center">
+                        <div id="totalTime" class="text-3xl font-bold text-purple-600 mb-2">0min</div>
+                        <div class="text-gray-600">Tempo Total Praticado</div>
+                    </div>
+                </div>
+                
+                <!-- Progress History -->
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <h4 class="font-semibold text-gray-800 mb-3">📈 Histórico de Pontuações</h4>
+                    <div id="progressHistory" class="flex items-end gap-2 h-20 justify-center">
+                        <div class="text-gray-400 text-sm">Nenhuma sessão ainda</div>
+                    </div>
+                </div>
+                
+                <!-- Reset Progress Button -->
+                <div class="text-center mt-4">
+                    <button onclick="resetProgress()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300">
+                        🔄 Resetar Progresso
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let recordingTimer;
+        let recordingTime = 0;
+        let currentTopic = '';
+        let currentQuestion = '';
+        let sessionStartTime = 0;
+        
+        // Progress tracking variables
+        let userProgress = {
+            sessions: 0,
+            scores: [],
+            totalTime: 0
+        };
+        
+        // Load progress from localStorage
+        function loadProgress() {
+            const saved = localStorage.getItem('englishPracticeProgress');
+            if (saved) {
+                userProgress = JSON.parse(saved);
+                updateProgressDisplay();
+            }
+        }
+        
+        // Save progress to localStorage
+        function saveProgress() {
+            localStorage.setItem('englishPracticeProgress', JSON.stringify(userProgress));
+        }
+
+        const topics = {
+            business: [
+                "Describe a challenging business negotiation you've experienced or would handle. What strategies would you use?",
+                "How do you think artificial intelligence will transform the workplace in the next decade?",
+                "Explain the concept of corporate social responsibility and its importance in modern business."
+            ],
+            debate: [
+                "Should social media platforms be held responsible for the content posted by their users? Defend your position.",
+                "Is remote work more beneficial than traditional office work? Present your arguments.",
+                "Do you believe that standardized testing is an effective measure of student ability? Why or why not?"
+            ],
+            academic: [
+                "Discuss the role of critical thinking in higher education and its application in professional settings.",
+                "How has globalization affected cultural identity in developing nations?",
+                "Analyze the relationship between technology advancement and environmental sustainability."
+            ]
+        };
+
+        function selectTopic(topic) {
+            currentTopic = topic;
+            const questions = topics[topic];
+            const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
+            currentQuestion = randomQuestion;
+            sessionStartTime = Date.now();
+            
+            document.getElementById('questionText').textContent = randomQuestion;
+            document.getElementById('questionCard').classList.remove('hidden');
+            
+            // Scroll to question
+            document.getElementById('questionCard').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Text-to-Speech function for question
+        function speakQuestion() {
+            if ('speechSynthesis' in window) {
+                // Stop any ongoing speech
+                speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(currentQuestion);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                
+                // Update button during speech
+                const speakBtn = document.getElementById('speakBtn');
+                speakBtn.innerHTML = '⏸️ Pausar Narração';
+                speakBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                speakBtn.classList.add('bg-orange-500', 'hover:bg-orange-600');
+                
+                utterance.onend = () => {
+                    speakBtn.innerHTML = '🔊 Ouvir Pergunta';
+                    speakBtn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+                    speakBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                };
+                
+                speechSynthesis.speak(utterance);
+            } else {
+                alert('Seu navegador não suporta síntese de voz. Tente usar Chrome ou Firefox.');
+            }
+        }
+
+        async function toggleRecording() {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const audioElement = document.getElementById('recordedAudio');
+                        audioElement.src = audioUrl;
+                        document.getElementById('audioPlayback').classList.remove('hidden');
+                        
+                        // Stop all tracks
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                    
+                    mediaRecorder.start();
+                    startRecording();
+                } catch (error) {
+                    alert('Erro ao acessar o microfone. Verifique as permissões do navegador.');
+                }
+            } else {
+                stopRecording();
+            }
+        }
+
+        function startRecording() {
+            isRecording = true;
+            recordingTime = 0;
+            
+            document.getElementById('recordBtn').innerHTML = '⏹️ Parar Gravação';
+            document.getElementById('recordBtn').classList.remove('bg-red-500', 'hover:bg-red-600');
+            document.getElementById('recordBtn').classList.add('bg-gray-500', 'hover:bg-gray-600');
+            document.getElementById('recordingStatus').classList.remove('hidden');
+            
+            recordingTimer = setInterval(() => {
+                recordingTime++;
+                const minutes = Math.floor(recordingTime / 60);
+                const seconds = recordingTime % 60;
+                document.getElementById('recordingTimer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            mediaRecorder.stop();
+            clearInterval(recordingTimer);
+            
+            document.getElementById('recordBtn').innerHTML = '🎤 Começar Gravação';
+            document.getElementById('recordBtn').classList.remove('bg-gray-500', 'hover:bg-gray-600');
+            document.getElementById('recordBtn').classList.add('bg-red-500', 'hover:bg-red-600');
+            document.getElementById('recordingStatus').classList.add('hidden');
+        }
+
+        function analyzeAudio() {
+            // Simulate rigorous AI analysis
+            document.getElementById('analysisCard').classList.remove('hidden');
+            
+            // More realistic and lower scores for rigorous analysis
+            const scores = [45, 52, 58, 63, 67, 71, 76, 82, 88, 94];
+            const randomScore = scores[Math.floor(Math.random() * scores.length)];
+            
+            document.getElementById('overallScore').textContent = `${randomScore}/100`;
+            document.getElementById('scoreBar').style.width = `${randomScore}%`;
+            
+            // Update score bar color based on more strict criteria
+            const scoreBar = document.getElementById('scoreBar');
+            if (randomScore >= 85) {
+                scoreBar.className = 'bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full transition-all duration-1000';
+            } else if (randomScore >= 70) {
+                scoreBar.className = 'bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-1000';
+            } else if (randomScore >= 55) {
+                scoreBar.className = 'bg-gradient-to-r from-yellow-500 to-orange-500 h-3 rounded-full transition-all duration-1000';
+            } else {
+                scoreBar.className = 'bg-gradient-to-r from-orange-500 to-red-600 h-3 rounded-full transition-all duration-1000';
+            }
+            
+            // Generate rigorous contextual feedback
+            generateRigorousFeedback(currentTopic, randomScore);
+            
+            // Update progress tracking
+            updateUserProgress(randomScore);
+            
+            // Scroll to analysis
+            document.getElementById('analysisCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function generateRigorousFeedback(topic, score) {
+            const rigorousFeedbackData = {
+                business: {
+                    strengths: {
+                        high: [
+                            "• Uso preciso de terminologia empresarial avançada",
+                            "• Estrutura argumentativa sofisticada com transições fluidas",
+                            "• Registro formal consistente e apropriado"
+                        ],
+                        medium: [
+                            "• Vocabulário empresarial básico adequado",
+                            "• Estrutura geral compreensível",
+                            "• Tentativa de manter tom profissional"
+                        ],
+                        low: [
+                            "• Algumas palavras relacionadas a negócios identificadas",
+                            "• Comunicação básica estabelecida"
+                        ]
+                    },
+                    improvements: {
+                        grammar: [
+                            "• Erro no uso de 'much/many' com substantivos contáveis/incontáveis",
+                            "• Concordância verbal incorreta em frases complexas",
+                            "• Uso inadequado de preposições em expressões idiomáticas",
+                            "• Problemas com tempos verbais em situações hipotéticas",
+                            "• Estrutura de voz passiva mal formada"
+                        ],
+                        vocabulary: [
+                            "• Substituir 'good' por: advantageous, beneficial, lucrative",
+                            "• Ao invés de 'important', use: pivotal, crucial, paramount",
+                            "• Trocar 'problem' por: impediment, obstacle, bottleneck",
+                            "• Usar 'implement' ao invés de 'do': execute, deploy, operationalize",
+                            "• Substituir 'help' por: facilitate, expedite, streamline"
+                        ],
+                        advanced: [
+                            "• Incorporar expressões como 'leverage synergies', 'optimize ROI'",
+                            "• Usar conectivos sofisticados: 'notwithstanding', 'albeit', 'insofar as'",
+                            "• Aplicar hedging language: 'arguably', 'ostensibly', 'purportedly'"
+                        ]
+                    },
+                    responses: {
+                        high: "Desempenho sólido, mas ainda há espaço para refinamento. Para atingir excelência, foque em eliminar hesitações e incorporar mais expressões idiomáticas do mundo corporativo.",
+                        medium: "Comunicação funcional, porém com várias áreas críticas para melhoria. Erros gramaticais frequentes prejudicam a credibilidade profissional. Pratique estruturas mais complexas.",
+                        low: "Nível básico identificado. Múltiplos erros gramaticais e vocabulário limitado impedem comunicação eficaz em contexto empresarial. Recomendo estudo intensivo de gramática avançada."
+                    }
+                },
+                debate: {
+                    strengths: {
+                        high: [
+                            "• Argumentação estruturada com premissas claras",
+                            "• Uso estratégico de evidências e exemplos",
+                            "• Antecipação eficaz de contra-argumentos"
+                        ],
+                        medium: [
+                            "• Posição clara estabelecida",
+                            "• Alguns pontos de apoio identificados",
+                            "• Tentativa de estruturação lógica"
+                        ],
+                        low: [
+                            "• Opinião pessoal expressa",
+                            "• Comunicação básica da posição"
+                        ]
+                    },
+                    improvements: {
+                        grammar: [
+                            "• Uso incorreto de subjuntivo em condicionais irreais",
+                            "• Problemas com inversão em estruturas enfáticas",
+                            "• Erro na formação de perguntas retóricas complexas",
+                            "• Concordância inadequada em cláusulas relativas",
+                            "• Uso impreciso de modais para expressar probabilidade"
+                        ],
+                        vocabulary: [
+                            "• Substituir 'I think' por: I contend, I posit, I maintain",
+                            "• Ao invés de 'wrong', use: fallacious, erroneous, misguided",
+                            "• Trocar 'show' por: demonstrate, substantiate, corroborate",
+                            "• Usar 'refute' ao invés de 'disagree': debunk, invalidate, discredit",
+                            "• Substituir 'because' por: given that, in light of, considering that"
+                        ],
+                        advanced: [
+                            "• Incorporar técnicas retóricas: 'ad hominem', 'straw man', 'false dichotomy'",
+                            "• Usar expressões de concessão: 'granted that', 'admittedly', 'conceding that'",
+                            "• Aplicar linguagem persuasiva: 'indubitably', 'unequivocally', 'categorically'"
+                        ]
+                    },
+                    responses: {
+                        high: "Argumentação competente, mas falta sofisticação retórica. Para debates de alto nível, desenvolva técnicas persuasivas mais avançadas e elimine imprecisões gramaticais.",
+                        medium: "Estrutura argumentativa reconhecível, porém com falhas significativas. Erros gramaticais e vocabulário limitado enfraquecem o poder persuasivo. Pratique debates formais.",
+                        low: "Nível argumentativo elementar. Múltiplos erros impedem comunicação persuasiva eficaz. Necessário estudo intensivo de técnicas de debate e gramática avançada."
+                    }
+                },
+                academic: {
+                    strengths: {
+                        high: [
+                            "• Registro acadêmico consistente e apropriado",
+                            "• Análise crítica com profundidade teórica",
+                            "• Uso adequado de hedging language"
+                        ],
+                        medium: [
+                            "• Tentativa de manter registro formal",
+                            "• Alguns elementos de análise presentes",
+                            "• Estrutura básica de ensaio identificável"
+                        ],
+                        low: [
+                            "• Comunicação de ideias básicas",
+                            "• Tentativa de abordar o tópico proposto"
+                        ]
+                    },
+                    improvements: {
+                        grammar: [
+                            "• Uso inadequado de artigos definidos/indefinidos em contexto acadêmico",
+                            "• Problemas com nominalização de verbos e adjetivos",
+                            "• Erro na formação de voz passiva em registro formal",
+                            "• Uso impreciso de conectivos causais e concessivos",
+                            "• Estrutura inadequada de períodos complexos"
+                        ],
+                        vocabulary: [
+                            "• Substituir 'study' por: investigate, examine, scrutinize",
+                            "• Ao invés de 'find', use: ascertain, establish, determine",
+                            "• Trocar 'big' por: substantial, considerable, significant",
+                            "• Usar 'analyze' ao invés de 'look at': dissect, deconstruct, evaluate",
+                            "• Substituir 'say' por: assert, postulate, hypothesize"
+                        ],
+                        advanced: [
+                            "• Incorporar hedging: 'ostensibly', 'purportedly', 'arguably'",
+                            "• Usar conectivos acadêmicos: 'notwithstanding', 'albeit', 'insofar as'",
+                            "• Aplicar nominalização: 'the implementation of' ao invés de 'implementing'"
+                        ]
+                    },
+                    responses: {
+                        high: "Análise acadêmica adequada, mas ainda distante da excelência. Para publicações de alto nível, elimine imprecisões gramaticais e desenvolva argumentação mais sofisticada.",
+                        medium: "Tentativa válida de discurso acadêmico, porém com limitações evidentes. Erros gramaticais e vocabulário restrito comprometem a credibilidade acadêmica. Estude textos especializados.",
+                        low: "Nível acadêmico insuficiente. Múltiplos erros gramaticais e vocabulário inadequado impedem comunicação eficaz em contexto universitário. Recomendo curso intensivo de escrita acadêmica."
+                    }
+                }
+            };
+            
+            const data = rigorousFeedbackData[topic];
+            const strengthsList = document.getElementById('strengths');
+            const improvementsList = document.getElementById('improvements');
+            const aiResponse = document.getElementById('aiResponse');
+            
+            // Determine feedback level based on score
+            let strengthLevel, responseLevel;
+            if (score >= 80) {
+                strengthLevel = 'high';
+                responseLevel = 'high';
+            } else if (score >= 60) {
+                strengthLevel = 'medium';
+                responseLevel = 'medium';
+            } else {
+                strengthLevel = 'low';
+                responseLevel = 'low';
+            }
+            
+            // Select strengths based on score level
+            const selectedStrengths = data.strengths[strengthLevel];
+            
+            // Always include grammar errors and vocabulary suggestions
+            const grammarErrors = data.improvements.grammar.sort(() => 0.5 - Math.random()).slice(0, 2);
+            const vocabularySuggestions = data.improvements.vocabulary.sort(() => 0.5 - Math.random()).slice(0, 2);
+            const advancedTips = data.improvements.advanced.sort(() => 0.5 - Math.random()).slice(0, 1);
+            
+            const allImprovements = [...grammarErrors, ...advancedTips];
+            
+            strengthsList.innerHTML = selectedStrengths.map(item => `<li>${item}</li>`).join('');
+            improvementsList.innerHTML = allImprovements.map(item => `<li>${item}</li>`).join('');
+            aiResponse.textContent = data.responses[responseLevel];
+            
+            // Update vocabulary suggestions section
+            const vocabularySection = document.getElementById('vocabularySuggestions');
+            const vocabularyCards = vocabularySuggestions.map(suggestion => {
+                const parts = suggestion.split('por:');
+                if (parts.length === 2) {
+                    const oldWord = parts[0].replace('• Substituir ', '').replace('• Ao invés de ', '').replace('• Trocar ', '').replace('• Usar ', '').replace(' ao invés de \'do\'', '').replace(/'/g, '').trim();
+                    const newWords = parts[1].trim();
+                    return `
+                        <div class="bg-white rounded-lg p-3 border border-purple-200">
+                            <span class="text-red-600 line-through">${oldWord}</span> → 
+                            <span class="text-green-600 font-semibold">${newWords}</span>
+                        </div>
+                    `;
+                }
+                return '';
+            }).filter(card => card !== '').join('');
+            
+            vocabularySection.innerHTML = vocabularyCards;
+        }
+
+        function practiceAgain() {
+            // Reset the current question
+            document.getElementById('audioPlayback').classList.add('hidden');
+            document.getElementById('analysisCard').classList.add('hidden');
+            document.getElementById('questionCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function newTopic() {
+            // Reset everything
+            document.getElementById('questionCard').classList.add('hidden');
+            document.getElementById('audioPlayback').classList.add('hidden');
+            document.getElementById('analysisCard').classList.add('hidden');
+            currentTopic = '';
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Update user progress after completing a session
+        function updateUserProgress(score) {
+            const sessionTime = Math.floor((Date.now() - sessionStartTime) / 1000 / 60); // minutes
+            
+            userProgress.sessions++;
+            userProgress.scores.push(score);
+            userProgress.totalTime += sessionTime;
+            
+            saveProgress();
+            updateProgressDisplay();
+        }
+        
+        // Update progress display
+        function updateProgressDisplay() {
+            document.getElementById('sessionsCount').textContent = userProgress.sessions;
+            
+            if (userProgress.scores.length > 0) {
+                const average = Math.round(userProgress.scores.reduce((a, b) => a + b, 0) / userProgress.scores.length);
+                document.getElementById('averageScore').textContent = `${average}%`;
+                
+                // Update average score color based on performance
+                const avgElement = document.getElementById('averageScore');
+                if (average >= 80) {
+                    avgElement.className = 'text-3xl font-bold text-green-600 mb-2';
+                } else if (average >= 60) {
+                    avgElement.className = 'text-3xl font-bold text-blue-600 mb-2';
+                } else {
+                    avgElement.className = 'text-3xl font-bold text-orange-600 mb-2';
+                }
+            } else {
+                document.getElementById('averageScore').textContent = '0%';
+            }
+            
+            document.getElementById('totalTime').textContent = `${userProgress.totalTime}min`;
+            
+            // Update progress history chart
+            updateProgressChart();
+        }
+        
+        // Update progress chart
+        function updateProgressChart() {
+            const historyContainer = document.getElementById('progressHistory');
+            
+            if (userProgress.scores.length === 0) {
+                historyContainer.innerHTML = '<div class="text-gray-400 text-sm">Nenhuma sessão ainda</div>';
+                return;
+            }
+            
+            // Show last 10 scores
+            const recentScores = userProgress.scores.slice(-10);
+            const maxScore = Math.max(...recentScores);
+            
+            historyContainer.innerHTML = recentScores.map((score, index) => {
+                const height = Math.max((score / 100) * 60, 8); // Min height 8px
+                let color = 'bg-red-500';
+                if (score >= 80) color = 'bg-green-500';
+                else if (score >= 60) color = 'bg-blue-500';
+                else if (score >= 40) color = 'bg-yellow-500';
+                
+                return `
+                    <div class="flex flex-col items-center">
+                        <div class="${color} rounded-t w-6 transition-all duration-500" style="height: ${height}px" title="Sessão ${userProgress.sessions - recentScores.length + index + 1}: ${score}%"></div>
+                        <div class="text-xs text-gray-500 mt-1">${score}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Reset progress function
+        function resetProgress() {
+            if (confirm('Tem certeza que deseja resetar todo o seu progresso? Esta ação não pode ser desfeita.')) {
+                userProgress = {
+                    sessions: 0,
+                    scores: [],
+                    totalTime: 0
+                };
+                saveProgress();
+                updateProgressDisplay();
+            }
+        }
+
+        // Load progress on page load
+        loadProgress();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96b7264e9088adf9',t:'MTc1NDU3MzY0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
